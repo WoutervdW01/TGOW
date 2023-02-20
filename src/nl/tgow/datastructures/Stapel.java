@@ -1,3 +1,5 @@
+package nl.tgow.datastructures;
+
 public class Stapel {
     private Node boven;
     private Node onder;

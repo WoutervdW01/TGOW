@@ -1,3 +1,5 @@
+package nl.tgow.datastructures;
+
 public class Program {
 
     public static void main(String[] args){
