@@ -6,6 +6,7 @@ import javafx.scene.layout.*;
 import nl.tgow.datastructures.Stapel;
 import nl.tgow.models.Coordinate;
 import nl.tgow.models.Piece;
+import nl.tgow.models.Score;
 
 import java.util.Arrays;
 
@@ -13,13 +14,22 @@ public class GameScreen {
 
     @FXML
     AnchorPane pane;
-
     @FXML
     VBox Mid;
+    @FXML
+    Label PlayerLabel;
+    @FXML
+    Label ScorePlayer1;
+    @FXML
+    Label ScorePlayer2;
+    @FXML
+    VBox Left;
 
     private int[][] board = new int[7][7];
     private Piece selectedPiece = null;
     private int currentPlayer = 1;
+
+    private Stapel score = new Stapel();
 
     public void initialize(){
         HBox boardContainer = new HBox();
@@ -60,6 +70,8 @@ public class GameScreen {
         Mid.getChildren().add(boardContainer);
         startPosition();
         setPieces();
+        printScores(getScores());
+        showPlayer();
     }
 
     private void clickSquare(int x, int y){
@@ -82,17 +94,16 @@ public class GameScreen {
             }
             setPieces();
         }
-        // if player clicked on a duplicate move
-        else if(board[x][y] == -2){
-            handleDuplicateMove(x, y);
+        else if(board[x][y] == -2 || board[x][y] == -3){
+            if(board[x][y] == -2){
+                handleDuplicateMove(x, y);
+            }
+            else if(board[x][y] == -3){
+                handleMoveMove(x, y);
+            }
             checkEnemyPieces(x, y);
-            currentPlayer = currentPlayer == 1 ? 2 : 1;
-        }
-        // if player clicked on a move move
-        else if(board[x][y] == -3){
-            handleMoveMove(x, y);
-            checkEnemyPieces(x, y);
-            currentPlayer = currentPlayer == 1 ? 2 : 1;
+            changePlayer();
+            printScores(getScores());
         }
         // if player clicked on an empty square
         else if(board[x][y] == -1){
@@ -226,6 +237,47 @@ public class GameScreen {
         }
         //Label label = new Label("" + player);
         //square.getChildren().add(label);
+    }
+
+    // --------------------------------------------- SCORE AND PLAYER ---------------------------------------------- //
+
+    private Stapel getScores(){
+        Stapel scores = new Stapel();
+        int player1 = 0;
+        int player2 = 0;
+        for(int x = 0; x < 7; x++){
+            for(int y = 0; y < 7; y++){
+                if(board[x][y] == 1)
+                    player1++;
+                else if(board[x][y] == 2)
+                    player2++;
+            }
+        }
+        scores.duw(new Score(1, player1));
+        scores.duw(new Score(2, player2));
+        return scores;
+    }
+
+    private void printScores(Stapel scores){
+        Score score2 = (Score) scores.pak();
+        Score score1 = (Score) scores.pak();
+        System.out.println("Player 1: " + score1.getScore());
+        System.out.println("Player 2: " + score2.getScore());
+        ScorePlayer1.setText("" + score1.getScore());
+        ScorePlayer2.setText("" + score2.getScore());
+    }
+
+    private void showPlayer(){
+        PlayerLabel.setText("Player " + currentPlayer);
+        if(currentPlayer == 1)
+            Left.setStyle("-fx-background-color: #ffa2a2;");
+        else
+            Left.setStyle("-fx-background-color: #a5ffa2;");
+    }
+
+    private void changePlayer(){
+        currentPlayer = currentPlayer == 1 ? 2 : 1;
+        showPlayer();
     }
 
 }

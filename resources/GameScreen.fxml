@@ -1,14 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
 <AnchorPane fx:id="pane" minHeight="700.0" minWidth="700.0" prefHeight="540.0" prefWidth="960.0" style="-fx-background-color: lightblue;" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="nl.tgow.GameScreen">
    <children>
       <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <VBox fx:id="Left" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: red;" HBox.hgrow="ALWAYS" />
+            <VBox fx:id="Left" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0" style="-fx-background-color: red;" HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Current Player: " />
+                  <Label fx:id="PlayerLabel" text="Label" />
+               </children></VBox>
             <VBox fx:id="Mid" minHeight="700.0" minWidth="700.0" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: black;" HBox.hgrow="ALWAYS" />
-            <VBox fx:id="Right" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: yellow;" HBox.hgrow="ALWAYS" />
+            <VBox fx:id="Right" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="50.0" style="-fx-background-color: yellow;" HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Score" />
+                  <HBox prefHeight="100.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                     <children>
+                        <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0" style="-fx-background-color: #ffa2a2;" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label text="Player 1" />
+                              <Label fx:id="ScorePlayer1" text="Label" />
+                           </children>
+                        </VBox>
+                        <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0" style="-fx-background-color: #a5ffa2;" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label text="Player 2" />
+                              <Label fx:id="ScorePlayer2" text="Label" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </children></VBox>
          </children>
       </HBox>
    </children>
