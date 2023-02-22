@@ -7,6 +7,8 @@ import nl.tgow.datastructures.Stapel;
 import nl.tgow.models.Coordinate;
 import nl.tgow.models.Piece;
 
+import java.util.Arrays;
+
 public class GameScreen {
 
     @FXML
@@ -83,10 +85,14 @@ public class GameScreen {
         // if player clicked on a duplicate move
         else if(board[x][y] == -2){
             handleDuplicateMove(x, y);
+            checkEnemyPieces(x, y);
+            currentPlayer = currentPlayer == 1 ? 2 : 1;
         }
         // if player clicked on a move move
         else if(board[x][y] == -3){
             handleMoveMove(x, y);
+            checkEnemyPieces(x, y);
+            currentPlayer = currentPlayer == 1 ? 2 : 1;
         }
         // if player clicked on an empty square
         else if(board[x][y] == -1){
@@ -106,18 +112,28 @@ public class GameScreen {
         selectedPiece = null;
         cleanupPossibleMoves();
         setPieces();
-        currentPlayer = currentPlayer == 1 ? 2 : 1;
     }
 
     private void handleMoveMove(int x, int y) {
         board[selectedPiece.getCoordinate().getX()][selectedPiece.getCoordinate().getY()] = 0;
-        //selectedPiece.getCoordinate().setX(x);
-        //selectedPiece.getCoordinate().setY(y);
         board[x][y] = selectedPiece.getPlayer();
         selectedPiece = null;
         cleanupPossibleMoves();
         setPieces();
-        currentPlayer = currentPlayer == 1 ? 2 : 1;
+    }
+
+    private void checkEnemyPieces(int x, int y){
+        int enemy = currentPlayer == 1 ? 2 : 1;
+        for(int a = x-1; a <= x+1; a++){
+            for(int b = y-1; b <= y+1; b++){
+                if(a >= 0 && a <= 6 && b >= 0 && b <= 6 && board[a][b] == enemy){
+                    System.out.println("enemy piece at " + a + "," + b);
+                    System.out.println("Current player: " + currentPlayer);
+                    board[a][b] = currentPlayer;
+                }
+            }
+        }
+        setPieces();
     }
 
     // ------------------------------------ POSSIBLE MOVES -------------------------------------------- //
