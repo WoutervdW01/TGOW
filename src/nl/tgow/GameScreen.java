@@ -3,6 +3,9 @@ package nl.tgow;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import nl.tgow.datastructures.Stapel;
+import nl.tgow.models.Coordinate;
+import nl.tgow.models.Piece;
 
 public class GameScreen {
 
@@ -13,6 +16,8 @@ public class GameScreen {
     VBox Mid;
 
     private int[][] board = new int[7][7];
+    private Piece selectedPiece = null;
+    private int currentPlayer = 1;
 
     public void initialize(){
         HBox boardContainer = new HBox();
@@ -56,12 +61,83 @@ public class GameScreen {
     }
 
     private void clickSquare(int x, int y){
-        if(board[x][y] == 1){
-            board[x][y] = 2;
-        } else if(board[x][y] == 2){
-            board[x][y] = 1;
+        // if player clicked on his own piece
+        if(board[x][y] == currentPlayer) {
+            if (selectedPiece != null) {
+                board[selectedPiece.getCoordinate().getX()][selectedPiece.getCoordinate().getY()] = selectedPiece.getPlayer();
+            }
+            selectedPiece = new Piece(board[x][y], new Coordinate(x, y));
+            board[x][y] = -1;
+            Stapel possibleMoves = getPossibleMoves();
+            while(possibleMoves.lengte() > 0){
+                Coordinate move = (Coordinate) possibleMoves.pak();
+                board[move.getX()][move.getY()] = -2;
+            }
+            setPieces();
         }
+        // if player clicked on a possible move
+        else if(board[x][y] == -2){
+            board[selectedPiece.getCoordinate().getX()][selectedPiece.getCoordinate().getY()] = 0;
+            selectedPiece.getCoordinate().setX(x);
+            selectedPiece.getCoordinate().setY(y);
+            board[x][y] = selectedPiece.getPlayer();
+            selectedPiece = null;
+            cleanupPossibleMoves();
+            setPieces();
+            currentPlayer = currentPlayer == 1 ? 2 : 1;
+        }
+        // if player clicked on an empty square
+        else if(board[x][y] == -1){
+            cleanupPossibleMoves();
+            if(selectedPiece != null){
+                board[selectedPiece.getCoordinate().getX()][selectedPiece.getCoordinate().getY()] = selectedPiece.getPlayer();
+                selectedPiece = null;
+                setPieces();
+            }
+        }
+    }
 
+    private void cleanupPossibleMoves(){
+        for(int x = 0; x < 7; x++){
+            for(int y = 0; y < 7; y++){
+                if(board[x][y] == -2){
+                    board[x][y] = 0;
+                }
+            }
+        }
+    }
+
+    private Stapel getPossibleMoves() {
+        cleanupPossibleMoves();
+        Stapel moves = new Stapel();
+        int x = selectedPiece.getCoordinate().getX();
+        int y = selectedPiece.getCoordinate().getY();
+        // all pieces adjacent to the selected piece, also diagonal
+        if(x > 0 && board[x-1][y] == 0){
+            moves.duw(new Coordinate(x-1, y));
+        }
+        if(x < 6 && board[x+1][y] == 0){
+            moves.duw(new Coordinate(x+1, y));
+        }
+        if(y > 0 && board[x][y-1] == 0){
+            moves.duw(new Coordinate(x, y-1));
+        }
+        if(y < 6 && board[x][y+1] == 0){
+            moves.duw(new Coordinate(x, y+1));
+        }
+        if(x > 0 && y > 0 && board[x-1][y-1] == 0){
+            moves.duw(new Coordinate(x-1, y-1));
+        }
+        if(x < 6 && y < 6 && board[x+1][y+1] == 0){
+            moves.duw(new Coordinate(x+1, y+1));
+        }
+        if(x > 0 && y < 6 && board[x-1][y+1] == 0){
+            moves.duw(new Coordinate(x-1, y+1));
+        }
+        if(x < 6 && y > 0 && board[x+1][y-1] == 0){
+            moves.duw(new Coordinate(x+1, y-1));
+        }
+        return moves;
     }
 
     private void startPosition(){
@@ -85,11 +161,7 @@ public class GameScreen {
 
         for(int x = 0; x < 7; x++){
             for(int y = 0; y < 7; y++){
-                if(board[x][y] == 1){
-                    setPieceInSquare(boardGrid, x, y, 1);
-                } else if(board[x][y] == 2){
-                    setPieceInSquare(boardGrid, x, y, 2);
-                }
+                setPieceInSquare(boardGrid, x, y, board[x][y]);
             }
         }
     }
@@ -100,6 +172,13 @@ public class GameScreen {
             square.setStyle("-fx-background-color: #ffa2a2; -fx-border-color: #000000; -fx-border-width: 1px;");
         else if(player == 2)
             square.setStyle("-fx-background-color: #a5ffa2; -fx-border-color: #000000; -fx-border-width: 1px;");
+        else if(player == -1)
+            square.setStyle("-fx-background-color: #ffe7b3; -fx-border-color: #000000; -fx-border-width: 1px;");
+        else if(player == -2)
+            square.setStyle("-fx-background-color: #b3ffe7; -fx-border-color: #000000; -fx-border-width: 1px;");
+        else{
+            square.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 1px;");
+        }
         //Label label = new Label("" + player);
         //square.getChildren().add(label);
     }
