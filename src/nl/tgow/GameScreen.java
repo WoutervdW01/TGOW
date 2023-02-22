@@ -68,23 +68,25 @@ public class GameScreen {
             }
             selectedPiece = new Piece(board[x][y], new Coordinate(x, y));
             board[x][y] = -1;
-            Stapel possibleMoves = getPossibleMoves();
-            while(possibleMoves.lengte() > 0){
-                Coordinate move = (Coordinate) possibleMoves.pak();
+            Stapel possibleAdjacentMoves = getPossibleAdjacentMoves();
+            Stapel possibleMoveMoves = getPossibleMoveMoves();
+            while(possibleAdjacentMoves.lengte() > 0){
+                Coordinate move = (Coordinate) possibleAdjacentMoves.pak();
                 board[move.getX()][move.getY()] = -2;
+            }
+            while(possibleMoveMoves.lengte() > 0){
+                Coordinate move = (Coordinate) possibleMoveMoves.pak();
+                board[move.getX()][move.getY()] = -3;
             }
             setPieces();
         }
-        // if player clicked on a possible move
+        // if player clicked on a duplicate move
         else if(board[x][y] == -2){
-            board[selectedPiece.getCoordinate().getX()][selectedPiece.getCoordinate().getY()] = 0;
-            selectedPiece.getCoordinate().setX(x);
-            selectedPiece.getCoordinate().setY(y);
-            board[x][y] = selectedPiece.getPlayer();
-            selectedPiece = null;
-            cleanupPossibleMoves();
-            setPieces();
-            currentPlayer = currentPlayer == 1 ? 2 : 1;
+            handleDuplicateMove(x, y);
+        }
+        // if player clicked on a move move
+        else if(board[x][y] == -3){
+            handleMoveMove(x, y);
         }
         // if player clicked on an empty square
         else if(board[x][y] == -1){
@@ -97,48 +99,73 @@ public class GameScreen {
         }
     }
 
+    // ------------------------------------ MOVE LOGIC -------------------------------------------- //
+    private void handleDuplicateMove(int x, int y){
+        board[selectedPiece.getCoordinate().getX()][selectedPiece.getCoordinate().getY()] = selectedPiece.getPlayer();
+        board[x][y] = selectedPiece.getPlayer();
+        selectedPiece = null;
+        cleanupPossibleMoves();
+        setPieces();
+        currentPlayer = currentPlayer == 1 ? 2 : 1;
+    }
+
+    private void handleMoveMove(int x, int y) {
+        board[selectedPiece.getCoordinate().getX()][selectedPiece.getCoordinate().getY()] = 0;
+        //selectedPiece.getCoordinate().setX(x);
+        //selectedPiece.getCoordinate().setY(y);
+        board[x][y] = selectedPiece.getPlayer();
+        selectedPiece = null;
+        cleanupPossibleMoves();
+        setPieces();
+        currentPlayer = currentPlayer == 1 ? 2 : 1;
+    }
+
+    // ------------------------------------ POSSIBLE MOVES -------------------------------------------- //
+
     private void cleanupPossibleMoves(){
         for(int x = 0; x < 7; x++){
             for(int y = 0; y < 7; y++){
-                if(board[x][y] == -2){
+                if(board[x][y] == -2 || board[x][y] == -3){
                     board[x][y] = 0;
                 }
             }
         }
     }
 
-    private Stapel getPossibleMoves() {
+    private Stapel getPossibleAdjacentMoves() {
         cleanupPossibleMoves();
         Stapel moves = new Stapel();
         int x = selectedPiece.getCoordinate().getX();
         int y = selectedPiece.getCoordinate().getY();
-        // all pieces adjacent to the selected piece, also diagonal
-        if(x > 0 && board[x-1][y] == 0){
-            moves.duw(new Coordinate(x-1, y));
-        }
-        if(x < 6 && board[x+1][y] == 0){
-            moves.duw(new Coordinate(x+1, y));
-        }
-        if(y > 0 && board[x][y-1] == 0){
-            moves.duw(new Coordinate(x, y-1));
-        }
-        if(y < 6 && board[x][y+1] == 0){
-            moves.duw(new Coordinate(x, y+1));
-        }
-        if(x > 0 && y > 0 && board[x-1][y-1] == 0){
-            moves.duw(new Coordinate(x-1, y-1));
-        }
-        if(x < 6 && y < 6 && board[x+1][y+1] == 0){
-            moves.duw(new Coordinate(x+1, y+1));
-        }
-        if(x > 0 && y < 6 && board[x-1][y+1] == 0){
-            moves.duw(new Coordinate(x-1, y+1));
-        }
-        if(x < 6 && y > 0 && board[x+1][y-1] == 0){
-            moves.duw(new Coordinate(x+1, y-1));
+
+        // all adjacent squares
+        for(int a = x-1; a <= x+1; a++){
+            for(int b = y-1; b <= y+1; b++){
+                if(a >= 0 && a <= 6 && b >= 0 && b <= 6 && board[a][b] == 0){
+                    moves.duw(new Coordinate(a, b));
+                }
+            }
         }
         return moves;
     }
+
+    private Stapel getPossibleMoveMoves() {
+        cleanupPossibleMoves();
+        Stapel moves = new Stapel();
+        int x = selectedPiece.getCoordinate().getX();
+        int y = selectedPiece.getCoordinate().getY();
+        // all squares two squares away
+        for(int a = x-2; a <= x+2; a++){
+            for(int b = y-2; b <= y+2; b++){
+                if(a >= 0 && a <= 6 && b >= 0 && b <= 6 && board[a][b] == 0 && (Math.abs(a-x) == 2 || Math.abs(b-y) == 2)){
+                    moves.duw(new Coordinate(a, b));
+                }
+            }
+        }
+        return moves;
+    }
+
+    // --------------------------------------------- BOARD LOGIC ---------------------------------------------- //
 
     private void startPosition(){
         for(int x = 6; x >= 5 ; x--){
@@ -176,6 +203,8 @@ public class GameScreen {
             square.setStyle("-fx-background-color: #ffe7b3; -fx-border-color: #000000; -fx-border-width: 1px;");
         else if(player == -2)
             square.setStyle("-fx-background-color: #b3ffe7; -fx-border-color: #000000; -fx-border-width: 1px;");
+        else if(player == -3)
+            square.setStyle("-fx-background-color: #b3b3ff; -fx-border-color: #000000; -fx-border-width: 1px;");
         else{
             square.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 1px;");
         }
