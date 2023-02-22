@@ -2,7 +2,14 @@
 
 <?import javafx.scene.layout.*?>
 
-
-<AnchorPane fx:id="pane" prefHeight="540.0" prefWidth="960.0" style="-fx-background-color: lightblue;" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="nl.tgow.GameScreen">
-
+<AnchorPane fx:id="pane" minHeight="700.0" minWidth="700.0" prefHeight="540.0" prefWidth="960.0" style="-fx-background-color: lightblue;" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="nl.tgow.GameScreen">
+   <children>
+      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <VBox fx:id="Left" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: red;" HBox.hgrow="ALWAYS" />
+            <VBox fx:id="Mid" minHeight="700.0" minWidth="700.0" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: black;" HBox.hgrow="ALWAYS" />
+            <VBox fx:id="Right" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: yellow;" HBox.hgrow="ALWAYS" />
+         </children>
+      </HBox>
+   </children>
 </AnchorPane>

@@ -24,10 +24,12 @@ public class Sample {
         FXMLLoader loader = new FXMLLoader(TGOW.class.getResource("/GameScreen.fxml"));
         Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
 
-        stage.setScene(new Scene(loader.load(), primaryScreenBounds.getWidth(), primaryScreenBounds.getHeight()));
+        stage.setScene(new Scene(loader.load(), 0.5 * primaryScreenBounds.getWidth(), 0.5 * primaryScreenBounds.getHeight()));
         stage.setX(primaryScreenBounds.getMinX());
         stage.setY(primaryScreenBounds.getMinY());
         stage.setFullScreen(true);
+        stage.setMinHeight(800);
+        stage.setMinWidth(1000);
         stage.show();
     }
 }
