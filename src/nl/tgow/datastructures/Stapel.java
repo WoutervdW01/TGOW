@@ -1,6 +1,6 @@
 package nl.tgow.datastructures;
 
-public class Stapel {
+public class Stapel<T> {
     private Node boven;
     private Node onder;
 
@@ -10,11 +10,11 @@ public class Stapel {
     }
 
     private class Node{
-        private Object obj;
+        private T obj;
         private Node volgende;
         private Node vorige;
 
-        public Node(Object obj){
+        public Node(T obj){
             this.obj = obj;
             this.volgende = null;
             this.vorige = null;
@@ -28,18 +28,18 @@ public class Stapel {
             return this.volgende;
         }
 
-        public Object getObj(){
+        public T getObj(){
             return this.obj;
         }
     }
 
-    public void duw(Object obj){
+    public void duw(T obj){
         Node NieuweNode = new Node(obj);
         NieuweNode.zetVolgende(this.boven);
         this.boven = NieuweNode;
     }
 
-    public Object pak(){
+    public T pak(){
         if(this.boven == null){
             return null;
         }
