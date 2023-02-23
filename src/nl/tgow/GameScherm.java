@@ -12,7 +12,7 @@ import nl.tgow.models.*;
 
 import java.io.IOException;
 
-public class GameScreen {
+public class GameScherm {
 
     @FXML
     AnchorPane pane;
@@ -30,9 +30,9 @@ public class GameScreen {
     private final int GROOTTE = 7;
     private final SpelType spelType;
 
-    private int[][] board = new int[GROOTTE][GROOTTE];
-    private Piece selectedPiece = null;
-    private int currentPlayer = 1;
+    private int[][] bord = new int[GROOTTE][GROOTTE];
+    private Vakje geselecteerdVakje = null;
+    private int huidigeSpeler = 1;
     private boolean klaar = false;
 
     private Stapel score = new Stapel();
@@ -40,22 +40,22 @@ public class GameScreen {
     private final Stapel<SpelStand> SpelHistorie = new Stapel<SpelStand>();
     private SpelStand huidigeSpelStand;
 
-    public GameScreen(SpelType spelType) {
+    public GameScherm(SpelType spelType) {
         this.spelType = spelType;
     }
 
     public void initialize(){
-        HBox boardContainer = new HBox();
-        boardContainer.setId("boardContainer");
-        boardContainer.setPrefSize(700, 700);
+        HBox bordContainer = new HBox();
+        bordContainer.setId("boardContainer");
+        bordContainer.setPrefSize(700, 700);
         // fill whole pane
-        AnchorPane.setTopAnchor(boardContainer, 0.0);
-        AnchorPane.setBottomAnchor(boardContainer, 0.0);
-        AnchorPane.setLeftAnchor(boardContainer, 0.0);
-        AnchorPane.setRightAnchor(boardContainer, 0.0);
+        AnchorPane.setTopAnchor(bordContainer, 0.0);
+        AnchorPane.setBottomAnchor(bordContainer, 0.0);
+        AnchorPane.setLeftAnchor(bordContainer, 0.0);
+        AnchorPane.setRightAnchor(bordContainer, 0.0);
 
         // allign center
-        boardContainer.setStyle("-fx-alignment: center;");
+        bordContainer.setStyle("-fx-alignment: center;");
 
 
         GridPane root = new GridPane();
@@ -63,30 +63,30 @@ public class GameScreen {
         //final int size = 4;
         for (int i = 0; i < GROOTTE; i++) {
             for (int j = 0; j < GROOTTE; j++) {
-                StackPane square = new StackPane();
-                square.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 1px;");
-                square.setId(i + "," + j);
-                square.setOnMouseClicked(event -> {
-                    String[] coordinates = square.getId().split(",");
+                StackPane vierkant = new StackPane();
+                vierkant.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 1px;");
+                vierkant.setId(i + "," + j);
+                vierkant.setOnMouseClicked(event -> {
+                    String[] coordinates = vierkant.getId().split(",");
                     int x = Integer.parseInt(coordinates[0]);
                     int y = Integer.parseInt(coordinates[1]);
-                    clickSquare(x, y);
-                    setPieces();
+                    klikOpVakje(x, y);
+                    tekenBord();
                 });
                 Label label = new Label("" + i + "," + j);
-                square.getChildren().add(label);
-                square.setPrefSize(100, 100);
-                root.add(square, i, j);
+                vierkant.getChildren().add(label);
+                vierkant.setPrefSize(100, 100);
+                root.add(vierkant, i, j);
             }
         }
-        boardContainer.getChildren().add(root);
-        Mid.getChildren().add(boardContainer);
+        bordContainer.getChildren().add(root);
+        Mid.getChildren().add(bordContainer);
 
-        Button undoButton = new Button("Ga terug");
-        undoButton.setOnMouseClicked(event -> {
-            undo();
+        Button gaTerug = new Button("Ga terug");
+        gaTerug.setOnMouseClicked(event -> {
+            gaTerug();
         });
-        Mid.getChildren().add(undoButton);
+        Mid.getChildren().add(gaTerug);
 
         Button hoofdMenuButton = new Button("Ga terug naar het hoofdmenu");
         hoofdMenuButton.setOnMouseClicked(event -> {
@@ -98,154 +98,156 @@ public class GameScreen {
         });
 
         Mid.getChildren().add(hoofdMenuButton);
-        startPosition();
-        setPieces();
-        SpelHistorie.duw(new SpelStand(copyBoard(board), currentPlayer));
+        startPositie();
+        tekenBord();
+        SpelHistorie.duw(new SpelStand(copyBoard(bord), huidigeSpeler));
         printScores(getScores());
-        showPlayer();
+        laatSpelerZien();
     }
 
-    private void undo() {
+    private void gaTerug() {
         if(SpelHistorie.lengte() > 1){
             SpelStand vorig = SpelHistorie.pak();
-            board = vorig.getBord();
-            currentPlayer = vorig.getHuidigeSpeler();
+            bord = vorig.getBord();
+            huidigeSpeler = vorig.getHuidigeSpeler();
             //SpelHistorie.duw(new SpelStand(copyBoard(board), currentPlayer));
-            setPieces();
+            tekenBord();
             printScores(getScores());
-            showPlayer();
+            laatSpelerZien();
         }
         if(klaar) klaar = false;
     }
 
-    private void clickSquare(int x, int y){
+    private void klikOpVakje(int x, int y){
         // if player clicked on his own piece
-        int currentPlayer = this.currentPlayer;
-        int[][] currentBoard = copyBoard(board);
+        int huidigeSpeler = this.huidigeSpeler;
+        int[][] huidigBord = copyBoard(bord);
 
-        if(board[x][y] == currentPlayer) {
-            huidigeSpelStand = new SpelStand(currentBoard, currentPlayer);
-            if (selectedPiece != null) {
-                board[selectedPiece.getCoordinate().getX()][selectedPiece.getCoordinate().getY()] = selectedPiece.getPlayer();
+        if(bord[x][y] == huidigeSpeler) {
+            if (geselecteerdVakje != null) {
+                bord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = geselecteerdVakje.getPlayer();
+                mogelijkeZettenOpschonen();
+                huidigBord = copyBoard(bord);
             }
-            selectedPiece = new Piece(board[x][y], new Coordinate(x, y));
-            board[x][y] = -1;
-            Stapel<Coordinate> possibleAdjacentMoves = getPossibleAdjacentMoves(selectedPiece.getCoordinate());
-            Stapel<Coordinate> possibleMoveMoves = getPossibleMoveMoves(selectedPiece.getCoordinate());
-            while(possibleAdjacentMoves.lengte() > 0){
-                Coordinate move = possibleAdjacentMoves.pak();
-                board[move.getX()][move.getY()] = -2;
+            huidigeSpelStand = new SpelStand(huidigBord, huidigeSpeler);
+            geselecteerdVakje = new Vakje(bord[x][y], new Coordinaat(x, y));
+            bord[x][y] = -1;
+            Stapel<Coordinaat> mogelijkeAangrenzendeZetten = getMogelijkeAangrenzendeZetten(geselecteerdVakje.getCoordinate());
+            Stapel<Coordinaat> mogelijkeSpringZetten = getMogelijkeSpringZetten(geselecteerdVakje.getCoordinate());
+            while(mogelijkeAangrenzendeZetten.lengte() > 0){
+                Coordinaat zet = mogelijkeAangrenzendeZetten.pak();
+                bord[zet.getX()][zet.getY()] = -2;
             }
-            while(possibleMoveMoves.lengte() > 0){
-                Coordinate move = possibleMoveMoves.pak();
-                board[move.getX()][move.getY()] = -3;
+            while(mogelijkeSpringZetten.lengte() > 0){
+                Coordinaat zet = mogelijkeSpringZetten.pak();
+                bord[zet.getX()][zet.getY()] = -3;
             }
-            setPieces();
+            tekenBord();
         }
-        else if(board[x][y] == -2 || board[x][y] == -3){
+        else if(bord[x][y] == -2 || bord[x][y] == -3){
             SpelHistorie.duw(huidigeSpelStand);
-            if(board[x][y] == -2){
-                handleDuplicateMove(x, y);
+            if(bord[x][y] == -2){
+                handelAangrenzendeZet(x, y);
             }
-            else if(board[x][y] == -3){
-                handleMoveMove(x, y);
+            else if(bord[x][y] == -3){
+                handelSpringZet(x, y);
             }
-            checkEnemyPieces(x, y);
-            changePlayer();
+            checkVijandelijkeStukken(x, y);
+            veranderSpeler();
             printScores(getScores());
         }
         // if player clicked on an empty square
-        else if(board[x][y] == -1){
-            cleanupPossibleMoves();
-            if(selectedPiece != null){
-                board[selectedPiece.getCoordinate().getX()][selectedPiece.getCoordinate().getY()] = selectedPiece.getPlayer();
-                selectedPiece = null;
-                setPieces();
+        else if(bord[x][y] == -1){
+            mogelijkeZettenOpschonen();
+            if(geselecteerdVakje != null){
+                bord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = geselecteerdVakje.getPlayer();
+                geselecteerdVakje = null;
+                tekenBord();
             }
         }
     }
 
     // ------------------------------------ MOVE LOGIC -------------------------------------------- //
-    private void handleDuplicateMove(int x, int y){
-        board[selectedPiece.getCoordinate().getX()][selectedPiece.getCoordinate().getY()] = selectedPiece.getPlayer();
-        board[x][y] = selectedPiece.getPlayer();
-        selectedPiece = null;
-        cleanupPossibleMoves();
-        setPieces();
+    private void handelAangrenzendeZet(int x, int y){
+        bord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = geselecteerdVakje.getPlayer();
+        bord[x][y] = geselecteerdVakje.getPlayer();
+        geselecteerdVakje = null;
+        mogelijkeZettenOpschonen();
+        tekenBord();
     }
 
-    private void handleMoveMove(int x, int y) {
-        board[selectedPiece.getCoordinate().getX()][selectedPiece.getCoordinate().getY()] = 0;
-        board[x][y] = selectedPiece.getPlayer();
-        selectedPiece = null;
-        cleanupPossibleMoves();
-        setPieces();
+    private void handelSpringZet(int x, int y) {
+        bord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = 0;
+        bord[x][y] = geselecteerdVakje.getPlayer();
+        geselecteerdVakje = null;
+        mogelijkeZettenOpschonen();
+        tekenBord();
     }
 
-    private void checkEnemyPieces(int x, int y){
-        int enemy = currentPlayer == 1 ? 2 : 1;
+    private void checkVijandelijkeStukken(int x, int y){
+        int vijand = huidigeSpeler == 1 ? 2 : 1;
         for(int a = x-1; a <= x+1; a++){
             for(int b = y-1; b <= y+1; b++){
-                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && board[a][b] == enemy){
-                    System.out.println("enemy piece at " + a + "," + b);
-                    System.out.println("Current player: " + currentPlayer);
-                    board[a][b] = currentPlayer;
+                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && bord[a][b] == vijand){
+                    System.out.println("vijandelijk stuk op " + a + "," + b);
+                    System.out.println("Huidige speler: " + huidigeSpeler);
+                    bord[a][b] = huidigeSpeler;
                 }
             }
         }
-        setPieces();
+        tekenBord();
     }
 
     // ------------------------------------ POSSIBLE MOVES -------------------------------------------- //
 
-    private void cleanupPossibleMoves(){
+    private void mogelijkeZettenOpschonen(){
         for(int x = 0; x < GROOTTE; x++){
             for(int y = 0; y < GROOTTE; y++){
-                if(board[x][y] == -2 || board[x][y] == -3){
-                    board[x][y] = 0;
+                if(bord[x][y] == -2 || bord[x][y] == -3){
+                    bord[x][y] = 0;
                 }
             }
         }
     }
 
-    private Stapel<Coordinate> getPossibleAdjacentMoves(Coordinate vak) {
-        cleanupPossibleMoves();
-        Stapel<Coordinate> moves = new Stapel<Coordinate>();
+    private Stapel<Coordinaat> getMogelijkeAangrenzendeZetten(Coordinaat vak) {
+        mogelijkeZettenOpschonen();
+        Stapel<Coordinaat> zetten = new Stapel<Coordinaat>();
         int x = vak.getX();
         int y = vak.getY();
 
         // all adjacent squares
         for(int a = x-1; a <= x+1; a++){
             for(int b = y-1; b <= y+1; b++){
-                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && board[a][b] == 0){
-                    moves.duw(new Coordinate(a, b));
+                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && bord[a][b] == 0){
+                    zetten.duw(new Coordinaat(a, b));
                 }
             }
         }
-        return moves;
+        return zetten;
     }
 
-    private Stapel<Coordinate> getPossibleMoveMoves(Coordinate vak) {
-        cleanupPossibleMoves();
-        Stapel<Coordinate> moves = new Stapel<Coordinate>();
+    private Stapel<Coordinaat> getMogelijkeSpringZetten(Coordinaat vak) {
+        mogelijkeZettenOpschonen();
+        Stapel<Coordinaat> zetten = new Stapel<Coordinaat>();
         int x = vak.getX();
         int y = vak.getY();
         // all squares two squares away
         for(int a = x-2; a <= x+2; a++){
             for(int b = y-2; b <= y+2; b++){
-                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && board[a][b] == 0 &&
+                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && bord[a][b] == 0 &&
                         (Math.abs(a-x) == 2 || Math.abs(b-y) == 2)){
-                    moves.duw(new Coordinate(a, b));
+                    zetten.duw(new Coordinaat(a, b));
                 }
             }
         }
-        return moves;
+        return zetten;
     }
 
-    private Stapel<Coordinate> alleMogelijkeZetten(Coordinate vak){
-        Stapel<Coordinate> zetten = new Stapel<Coordinate>();
-        Stapel<Coordinate> aanliggendeZetten = getPossibleAdjacentMoves(vak);
-        Stapel<Coordinate> sprongZetten = getPossibleMoveMoves(vak);
+    private Stapel<Coordinaat> alleMogelijkeZetten(Coordinaat vak){
+        Stapel<Coordinaat> zetten = new Stapel<Coordinaat>();
+        Stapel<Coordinaat> aanliggendeZetten = getMogelijkeAangrenzendeZetten(vak);
+        Stapel<Coordinaat> sprongZetten = getMogelijkeSpringZetten(vak);
         while(aanliggendeZetten.lengte() > 0){
             zetten.duw(aanliggendeZetten.pak());
         }
@@ -257,33 +259,33 @@ public class GameScreen {
 
     // --------------------------------------------- BOARD LOGIC ---------------------------------------------- //
 
-    private void startPosition(){
+    private void startPositie(){
         for(int x = GROOTTE - 1; x >= GROOTTE - 2 ; x--){
             for(int y = 0; y < 2; y++){
-                board[x][y] = 1;
+                bord[x][y] = 1;
             }
         }
 
         for(int x = 0; x < 2; x++){
             for(int y = GROOTTE - 1; y >= GROOTTE - 2; y--){
-                board[x][y] = 2;
+                bord[x][y] = 2;
             }
         }
     }
 
-    public void setPieces(){
+    public void tekenBord(){
         // Get the board by id
         HBox boardContainer = (HBox) pane.lookup("#boardContainer");
         GridPane boardGrid = (GridPane) boardContainer.lookup("#board");
 
         for(int x = 0; x < GROOTTE; x++){
             for(int y = 0; y < GROOTTE; y++){
-                setPieceInSquare(boardGrid, x, y, board[x][y]);
+                stopStukkenInVakje(boardGrid, x, y, bord[x][y]);
             }
         }
     }
 
-    public void setPieceInSquare(GridPane board, int x, int y, int player){
+    public void stopStukkenInVakje(GridPane board, int x, int y, int player){
         StackPane square = (StackPane) board.lookup("#" + x + "," + y);
         if(player == 1)
             square.setStyle("-fx-background-color: #ffa2a2; -fx-border-color: #000000; -fx-border-width: 1px;");
@@ -310,9 +312,9 @@ public class GameScreen {
         int player2 = 0;
         for(int x = 0; x < GROOTTE; x++){
             for(int y = 0; y < GROOTTE; y++){
-                if(board[x][y] == 1)
+                if(bord[x][y] == 1)
                     player1++;
-                else if(board[x][y] == 2)
+                else if(bord[x][y] == 2)
                     player2++;
             }
         }
@@ -330,43 +332,43 @@ public class GameScreen {
         ScorePlayer2.setText("" + score2.getScore());
     }
 
-    private void showPlayer(){
-        PlayerLabel.setText("Player " + currentPlayer);
-        if(currentPlayer == 1)
+    private void laatSpelerZien(){
+        PlayerLabel.setText("Player " + huidigeSpeler);
+        if(huidigeSpeler == 1)
             Left.setStyle("-fx-background-color: #ffa2a2;");
         else
             Left.setStyle("-fx-background-color: #a5ffa2;");
     }
 
-    private void changePlayer(){
+    private void veranderSpeler(){
         //SpelStand huidigeStand = new SpelStand(copyBoard(board), currentPlayer);
         //SpelHistorie.duw(huidigeStand);
         checkVoorWinst();
         if(!klaar) {
             if(spelType == SpelType.Multiplayer) {
-                currentPlayer = currentPlayer == 1 ? 2 : 1;
-                showPlayer();
+                huidigeSpeler = huidigeSpeler == 1 ? 2 : 1;
+                laatSpelerZien();
             } else if(spelType == SpelType.Singleplayer) {
-                currentPlayer = currentPlayer == 1 ? 2 : 1;
-                if(currentPlayer == 2)
+                huidigeSpeler = huidigeSpeler == 1 ? 2 : 1;
+                if(huidigeSpeler == 2)
                     try {
                         System.out.println("AI is aan de beurt");
                         doeComputerZet();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                showPlayer();
+                laatSpelerZien();
             }
         }
     }
 
     private void doeComputerZet() throws InterruptedException {
-        //Thread.sleep(1000);
-        Stapel<Coordinate> stukken = getStukkenVanSpeler(2);
+        //Thread.sleep(500);
+        Stapel<Coordinaat> stukken = getStukkenVanSpeler(2);
         Stapel<Zet> zetten = new Stapel<Zet>();
         while(stukken.lengte() > 0){
-            Coordinate stuk = stukken.pak();
-            Stapel<Coordinate> stukZetten = alleMogelijkeZetten(stuk);
+            Coordinaat stuk = stukken.pak();
+            Stapel<Coordinaat> stukZetten = alleMogelijkeZetten(stuk);
             while(stukZetten.lengte() > 0){
                 zetten.duw(new Zet(stuk, stukZetten.pak()));
             }
@@ -389,26 +391,26 @@ public class GameScreen {
         int xNaar = zet.getNaar().getX();
         int yNaar = zet.getNaar().getY();
 
-        Piece piece = new Piece(board[xVan][yVan], new Coordinate(xVan, yVan));
-        selectedPiece = piece;
+        Vakje piece = new Vakje(bord[xVan][yVan], new Coordinaat(xVan, yVan));
+        geselecteerdVakje = piece;
 
         if(Math.abs(xVan - xNaar) == 1){
-            handleDuplicateMove(xNaar, yNaar);
+            handelAangrenzendeZet(xNaar, yNaar);
         }
         else{
-            handleMoveMove(xNaar, yNaar);
+            handelSpringZet(xNaar, yNaar);
         }
-        checkEnemyPieces(xNaar, yNaar);
-        changePlayer();
+        checkVijandelijkeStukken(xNaar, yNaar);
+        veranderSpeler();
     }
 
     private void checkVoorWinst() {
         // check of er voor de tegenstander geen zetten meer mogelijk zijn
-        Stapel<Coordinate> tegenstanderStukken = getStukkenVanSpeler(currentPlayer == 1 ? 2 : 1);
-        Stapel<Coordinate> zetten = new Stapel<Coordinate>();
+        Stapel<Coordinaat> tegenstanderStukken = getStukkenVanSpeler(huidigeSpeler == 1 ? 2 : 1);
+        Stapel<Coordinaat> zetten = new Stapel<Coordinaat>();
         while(tegenstanderStukken.lengte() > 0){
-            Coordinate stuk = tegenstanderStukken.pak();
-            Stapel<Coordinate> stukZetten = alleMogelijkeZetten(stuk);
+            Coordinaat stuk = tegenstanderStukken.pak();
+            Stapel<Coordinaat> stukZetten = alleMogelijkeZetten(stuk);
             while(stukZetten.lengte() > 0){
                 zetten.duw(stukZetten.pak());
             }
@@ -427,8 +429,8 @@ public class GameScreen {
             }
 
             else {
-                System.out.println("Player " + currentPlayer + " heeft gewonnen!");
-                PlayerLabel.setText("Player " + currentPlayer + " heeft gewonnen!");
+                System.out.println("Player " + huidigeSpeler + " heeft gewonnen!");
+                PlayerLabel.setText("Player " + huidigeSpeler + " heeft gewonnen!");
                 Left.setStyle("-fx-background-color: #FFFFFF;");
             }
 
@@ -440,17 +442,17 @@ public class GameScreen {
 
     private void terugNaarHoofdMenu() throws IOException {
         Stage stage = (Stage) pane.getScene().getWindow();
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/SplashScreen.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/BeginScherm.fxml"));
         stage.setScene(new Scene(loader.load(), 300, 300));
         stage.show();
     }
 
-    private Stapel<Coordinate> getStukkenVanSpeler(int speler) {
-        Stapel<Coordinate> stukken = new Stapel<Coordinate>();
+    private Stapel<Coordinaat> getStukkenVanSpeler(int speler) {
+        Stapel<Coordinaat> stukken = new Stapel<Coordinaat>();
         for(int x = 0; x < GROOTTE; x++){
             for(int y = 0; y < GROOTTE; y++){
-                if(board[x][y] == speler)
-                    stukken.duw(new Coordinate(x, y));
+                if(bord[x][y] == speler)
+                    stukken.duw(new Coordinaat(x, y));
             }
         }
         return stukken;

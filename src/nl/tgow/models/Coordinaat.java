@@ -1,10 +1,10 @@
 package nl.tgow.models;
 
-public class Coordinate {
+public class Coordinaat {
     private int x;
     private int y;
 
-    public Coordinate(int x, int y){
+    public Coordinaat(int x, int y){
         this.x = x;
         this.y = y;
     }

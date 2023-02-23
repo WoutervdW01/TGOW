@@ -11,7 +11,7 @@ import nl.tgow.models.SpelType;
 
 import java.io.IOException;
 
-public class Sample {
+public class BeginScherm {
 
     @FXML
     private Button MultiplayerButton;
@@ -24,8 +24,8 @@ public class Sample {
 
     public void startGame() throws IOException {
         Stage stage = (Stage) MultiplayerButton.getScene().getWindow();
-        FXMLLoader loader = new FXMLLoader(TGOW.class.getResource("/GameScreen.fxml"));
-        loader.setController(new GameScreen(spelType));
+        FXMLLoader loader = new FXMLLoader(TGOW.class.getResource("/GameScherm.fxml"));
+        loader.setController(new GameScherm(spelType));
         Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
 
         stage.setScene(new Scene(loader.load(), 0.5 * primaryScreenBounds.getWidth(), 0.5 * primaryScreenBounds.getHeight()));

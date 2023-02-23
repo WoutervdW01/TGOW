@@ -16,7 +16,7 @@ public class TGOW extends Application {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        Parent root = FXMLLoader.load(TGOW.class.getResource("/SplashScreen.fxml"));
+        Parent root = FXMLLoader.load(TGOW.class.getResource("/BeginScherm.fxml"));
         primaryStage.setTitle("TGOW");
         primaryStage.setScene(new Scene(root,300, 300));
         primaryStage.show();

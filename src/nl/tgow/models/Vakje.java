@@ -1,10 +1,10 @@
 package nl.tgow.models;
 
-public class Piece {
+public class Vakje {
     private int player;
-    private Coordinate coordinate;
+    private Coordinaat coordinate;
 
-    public Piece(int player, Coordinate coordinate){
+    public Vakje(int player, Coordinaat coordinate){
         this.player = player;
         this.coordinate = coordinate;
     }
@@ -13,7 +13,7 @@ public class Piece {
         return player;
     }
 
-    public Coordinate getCoordinate() {
+    public Coordinaat getCoordinate() {
         return coordinate;
     }
 }

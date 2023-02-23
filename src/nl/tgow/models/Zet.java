@@ -1,19 +1,19 @@
 package nl.tgow.models;
 
 public class Zet {
-    private Coordinate van;
-    private Coordinate naar;
+    private Coordinaat van;
+    private Coordinaat naar;
 
-    public Zet(Coordinate van, Coordinate naar){
+    public Zet(Coordinaat van, Coordinaat naar){
         this.van = van;
         this.naar = naar;
     }
 
-    public Coordinate getVan() {
+    public Coordinaat getVan() {
         return van;
     }
 
-    public Coordinate getNaar() {
+    public Coordinaat getNaar() {
         return naar;
     }
 }
