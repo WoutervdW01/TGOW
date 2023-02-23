@@ -44,6 +44,15 @@ public class GameScherm {
         this.spelType = spelType;
     }
 
+    /**
+     * Initialiseer het spelbord
+     * Maakt een gridpane aan met vakjes (GROOTTE x GROOTTE)
+     * Elk vakje heeft een click event
+     * Elk vakje heeft een id met de coordinaten
+     * Er zijn ook twee buttons:
+     * - Ga terug (zet een stap terug in de spelhistorie)
+     * - Ga terug naar hoofdmenu
+     */
     public void initialize(){
         HBox bordContainer = new HBox();
         bordContainer.setId("boardContainer");
@@ -105,19 +114,123 @@ public class GameScherm {
         laatSpelerZien();
     }
 
-    private void gaTerug() {
-        if(SpelHistorie.lengte() > 1){
-            SpelStand vorig = SpelHistorie.pak();
-            bord = vorig.getBord();
-            huidigeSpeler = vorig.getHuidigeSpeler();
-            //SpelHistorie.duw(new SpelStand(copyBoard(board), currentPlayer));
-            tekenBord();
-            printScores(getScores(bord));
-            laatSpelerZien();
+    // ------------------------------------ POSSIBLE MOVES -------------------------------------------- //
+
+    /**
+     * Maakt alle mogelijke zetten op het bord leeg
+     */
+    private void mogelijkeZettenOpschonen(){
+        for(int x = 0; x < GROOTTE; x++){
+            for(int y = 0; y < GROOTTE; y++){
+                if(bord[x][y] == -2 || bord[x][y] == -3){
+                    bord[x][y] = 0;
+                }
+            }
         }
-        if(klaar) klaar = false;
     }
 
+    /**
+     * Geeft een stapel met alle mogelijke zetten die aan het vakje grenzen
+     * @return Stapel met alle mogelijke zetten
+     */
+    private Stapel<Coordinaat> getMogelijkeAangrenzendeZetten(Coordinaat vak) {
+        mogelijkeZettenOpschonen();
+        Stapel<Coordinaat> zetten = new Stapel<Coordinaat>();
+        int x = vak.getX();
+        int y = vak.getY();
+
+        // all adjacent squares
+        for(int a = x-1; a <= x+1; a++){
+            for(int b = y-1; b <= y+1; b++){
+                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && bord[a][b] == 0){
+                    zetten.duw(new Coordinaat(a, b));
+                }
+            }
+        }
+        return zetten;
+    }
+
+    /**
+     * Geeft een stapel met alle mogelijke zetten die twee vakjes verder liggen
+     * @return Stapel met alle mogelijke zetten
+     */
+    private Stapel<Coordinaat> getMogelijkeSpringZetten(Coordinaat vak) {
+        mogelijkeZettenOpschonen();
+        Stapel<Coordinaat> zetten = new Stapel<Coordinaat>();
+        int x = vak.getX();
+        int y = vak.getY();
+        // all squares two squares away
+        for(int a = x-2; a <= x+2; a++){
+            for(int b = y-2; b <= y+2; b++){
+                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && bord[a][b] == 0 &&
+                        (Math.abs(a-x) == 2 || Math.abs(b-y) == 2)){
+                    zetten.duw(new Coordinaat(a, b));
+                }
+            }
+        }
+        return zetten;
+    }
+
+    /**
+     * Geeft een stapel met alle mogelijke zetten die het vakje kan maken
+     * @return Stapel met alle mogelijke zetten
+     */
+    private Stapel<Coordinaat> alleMogelijkeZetten(Coordinaat vak){
+        Stapel<Coordinaat> zetten = new Stapel<Coordinaat>();
+        Stapel<Coordinaat> aanliggendeZetten = getMogelijkeAangrenzendeZetten(vak);
+        Stapel<Coordinaat> sprongZetten = getMogelijkeSpringZetten(vak);
+        while(aanliggendeZetten.lengte() > 0){
+            zetten.duw(aanliggendeZetten.pak());
+        }
+        while(sprongZetten.lengte() > 0){
+            zetten.duw(sprongZetten.pak());
+        }
+        return zetten;
+    }
+
+    // --------------------------------------------- BOARD LOGIC ---------------------------------------------- //
+
+    /**
+     * Zorgt ervoor dat de stukken in de startpositie op het bord worden getekend
+     */
+    private void startPositie(){
+        for(int x = GROOTTE - 1; x >= GROOTTE - 2 ; x--){
+            for(int y = 0; y < 2; y++){
+                bord[x][y] = 1;
+            }
+        }
+
+        for(int x = 0; x < 2; x++){
+            for(int y = GROOTTE - 1; y >= GROOTTE - 2; y--){
+                bord[x][y] = 2;
+            }
+        }
+    }
+
+    /**
+     * Tekent het bord op basis van de huidige situatie (bord[][])
+     */
+    public void tekenBord(){
+        // Get the board by id
+        HBox boardContainer = (HBox) pane.lookup("#boardContainer");
+        GridPane boardGrid = (GridPane) boardContainer.lookup("#board");
+
+        for(int x = 0; x < GROOTTE; x++){
+            for(int y = 0; y < GROOTTE; y++){
+                stopStukkenInVakje(boardGrid, x, y, bord[x][y]);
+            }
+        }
+    }
+
+    /**
+     * De OnClickListener voor het klikken op een vakje
+     * Als er geen stuk is geselecteerd, wordt het geselecteerd
+     * Als er wel een stuk is geselecteerd, wordt er gekeken of het vakje een mogelijke zet is
+     * Als het een mogelijke zet is, wordt het stuk verplaatst
+     * Als het geen mogelijke zet is, wordt het stuk geselecteerd
+     * @param x x-coordinaat van het vakje
+     * @param y y-coordinaat van het vakje
+     */
     private void klikOpVakje(int x, int y){
         // if player clicked on his own piece
         int huidigeSpeler = this.huidigeSpeler;
@@ -167,6 +280,25 @@ public class GameScherm {
         }
     }
 
+    /**
+     * Zorgt ervoor dat er 'teruggespoeld' kan worden in de spelhistorie
+     * Als er nog geen zetten zijn gedaan, gebeurt er niets
+     * Als er wel zetten zijn gedaan, wordt de laatste zet ongedaan gemaakt
+     * De spelstanden staan op een stack, dus de laatste zet staat bovenaan
+     */
+    private void gaTerug() {
+        if(SpelHistorie.lengte() > 1){
+            SpelStand vorig = SpelHistorie.pak();
+            bord = vorig.getBord();
+            huidigeSpeler = vorig.getHuidigeSpeler();
+            //SpelHistorie.duw(new SpelStand(copyBoard(board), currentPlayer));
+            tekenBord();
+            printScores(getScores(bord));
+            laatSpelerZien();
+        }
+        if(klaar) klaar = false;
+    }
+
     // ------------------------------------ MOVE LOGIC -------------------------------------------- //
     private void handelAangrenzendeZet(int x, int y, int[][] huidigBord){
         huidigBord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = geselecteerdVakje.getPlayer();
@@ -196,93 +328,6 @@ public class GameScherm {
             }
         }
         //tekenBord();
-    }
-
-    // ------------------------------------ POSSIBLE MOVES -------------------------------------------- //
-
-    private void mogelijkeZettenOpschonen(){
-        for(int x = 0; x < GROOTTE; x++){
-            for(int y = 0; y < GROOTTE; y++){
-                if(bord[x][y] == -2 || bord[x][y] == -3){
-                    bord[x][y] = 0;
-                }
-            }
-        }
-    }
-
-    private Stapel<Coordinaat> getMogelijkeAangrenzendeZetten(Coordinaat vak) {
-        mogelijkeZettenOpschonen();
-        Stapel<Coordinaat> zetten = new Stapel<Coordinaat>();
-        int x = vak.getX();
-        int y = vak.getY();
-
-        // all adjacent squares
-        for(int a = x-1; a <= x+1; a++){
-            for(int b = y-1; b <= y+1; b++){
-                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && bord[a][b] == 0){
-                    zetten.duw(new Coordinaat(a, b));
-                }
-            }
-        }
-        return zetten;
-    }
-
-    private Stapel<Coordinaat> getMogelijkeSpringZetten(Coordinaat vak) {
-        mogelijkeZettenOpschonen();
-        Stapel<Coordinaat> zetten = new Stapel<Coordinaat>();
-        int x = vak.getX();
-        int y = vak.getY();
-        // all squares two squares away
-        for(int a = x-2; a <= x+2; a++){
-            for(int b = y-2; b <= y+2; b++){
-                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && bord[a][b] == 0 &&
-                        (Math.abs(a-x) == 2 || Math.abs(b-y) == 2)){
-                    zetten.duw(new Coordinaat(a, b));
-                }
-            }
-        }
-        return zetten;
-    }
-
-    private Stapel<Coordinaat> alleMogelijkeZetten(Coordinaat vak){
-        Stapel<Coordinaat> zetten = new Stapel<Coordinaat>();
-        Stapel<Coordinaat> aanliggendeZetten = getMogelijkeAangrenzendeZetten(vak);
-        Stapel<Coordinaat> sprongZetten = getMogelijkeSpringZetten(vak);
-        while(aanliggendeZetten.lengte() > 0){
-            zetten.duw(aanliggendeZetten.pak());
-        }
-        while(sprongZetten.lengte() > 0){
-            zetten.duw(sprongZetten.pak());
-        }
-        return zetten;
-    }
-
-    // --------------------------------------------- BOARD LOGIC ---------------------------------------------- //
-
-    private void startPositie(){
-        for(int x = GROOTTE - 1; x >= GROOTTE - 2 ; x--){
-            for(int y = 0; y < 2; y++){
-                bord[x][y] = 1;
-            }
-        }
-
-        for(int x = 0; x < 2; x++){
-            for(int y = GROOTTE - 1; y >= GROOTTE - 2; y--){
-                bord[x][y] = 2;
-            }
-        }
-    }
-
-    public void tekenBord(){
-        // Get the board by id
-        HBox boardContainer = (HBox) pane.lookup("#boardContainer");
-        GridPane boardGrid = (GridPane) boardContainer.lookup("#board");
-
-        for(int x = 0; x < GROOTTE; x++){
-            for(int y = 0; y < GROOTTE; y++){
-                stopStukkenInVakje(boardGrid, x, y, bord[x][y]);
-            }
-        }
     }
 
     public void stopStukkenInVakje(GridPane board, int x, int y, int player){
@@ -363,6 +408,8 @@ public class GameScherm {
         tekenBord();
     }
 
+    // --------------------------------------------- AI ---------------------------------------------- //
+
     private void doeComputerZet() throws InterruptedException {
         //Thread.sleep(500);
         Stapel<Coordinaat> stukken = getStukkenVanSpeler(2);
@@ -375,17 +422,6 @@ public class GameScherm {
             }
         }
         if(zetten.lengte() > 0){
-
-            /*
-            int lengte = zetten.lengte();
-            int random = (int) (Math.random() * lengte);
-            Zet zet = null;
-            for(int i = 0; i <= random; i++){
-                zet = zetten.pak();
-            }
-             */
-
-
             Zet zet = berekenBesteZet(zetten);
             System.out.println("AI zet: van " + zet.getVan().getX() + "," + zet.getVan().getY() + " naar " + zet.getNaar().getX() + "," + zet.getNaar().getY());
             doeZet(zet, bord);
