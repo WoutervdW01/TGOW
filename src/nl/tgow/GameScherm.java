@@ -101,7 +101,7 @@ public class GameScherm {
         startPositie();
         tekenBord();
         SpelHistorie.duw(new SpelStand(copyBoard(bord), huidigeSpeler));
-        printScores(getScores());
+        printScores(getScores(bord));
         laatSpelerZien();
     }
 
@@ -112,7 +112,7 @@ public class GameScherm {
             huidigeSpeler = vorig.getHuidigeSpeler();
             //SpelHistorie.duw(new SpelStand(copyBoard(board), currentPlayer));
             tekenBord();
-            printScores(getScores());
+            printScores(getScores(bord));
             laatSpelerZien();
         }
         if(klaar) klaar = false;
@@ -142,19 +142,19 @@ public class GameScherm {
                 Coordinaat zet = mogelijkeSpringZetten.pak();
                 bord[zet.getX()][zet.getY()] = -3;
             }
-            tekenBord();
+            //tekenBord();
         }
         else if(bord[x][y] == -2 || bord[x][y] == -3){
             SpelHistorie.duw(huidigeSpelStand);
             if(bord[x][y] == -2){
-                handelAangrenzendeZet(x, y);
+                handelAangrenzendeZet(x, y, this.bord);
             }
             else if(bord[x][y] == -3){
-                handelSpringZet(x, y);
+                handelSpringZet(x, y, this.bord);
             }
-            checkVijandelijkeStukken(x, y);
+            checkVijandelijkeStukken(x, y, this.bord);
             veranderSpeler();
-            printScores(getScores());
+            printScores(getScores(bord));
         }
         // if player clicked on an empty square
         else if(bord[x][y] == -1){
@@ -162,40 +162,40 @@ public class GameScherm {
             if(geselecteerdVakje != null){
                 bord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = geselecteerdVakje.getPlayer();
                 geselecteerdVakje = null;
-                tekenBord();
+                //tekenBord();
             }
         }
     }
 
     // ------------------------------------ MOVE LOGIC -------------------------------------------- //
-    private void handelAangrenzendeZet(int x, int y){
-        bord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = geselecteerdVakje.getPlayer();
-        bord[x][y] = geselecteerdVakje.getPlayer();
+    private void handelAangrenzendeZet(int x, int y, int[][] huidigBord){
+        huidigBord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = geselecteerdVakje.getPlayer();
+        huidigBord[x][y] = geselecteerdVakje.getPlayer();
         geselecteerdVakje = null;
         mogelijkeZettenOpschonen();
-        tekenBord();
+        //tekenBord();
     }
 
-    private void handelSpringZet(int x, int y) {
-        bord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = 0;
-        bord[x][y] = geselecteerdVakje.getPlayer();
+    private void handelSpringZet(int x, int y, int[][] huidigBord) {
+        huidigBord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = 0;
+        huidigBord[x][y] = geselecteerdVakje.getPlayer();
         geselecteerdVakje = null;
         mogelijkeZettenOpschonen();
-        tekenBord();
+        //tekenBord();
     }
 
-    private void checkVijandelijkeStukken(int x, int y){
+    private void checkVijandelijkeStukken(int x, int y, int[][] huidigBord){
         int vijand = huidigeSpeler == 1 ? 2 : 1;
         for(int a = x-1; a <= x+1; a++){
             for(int b = y-1; b <= y+1; b++){
-                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && bord[a][b] == vijand){
+                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && huidigBord[a][b] == vijand){
                     System.out.println("vijandelijk stuk op " + a + "," + b);
                     System.out.println("Huidige speler: " + huidigeSpeler);
-                    bord[a][b] = huidigeSpeler;
+                    huidigBord[a][b] = huidigeSpeler;
                 }
             }
         }
-        tekenBord();
+        //tekenBord();
     }
 
     // ------------------------------------ POSSIBLE MOVES -------------------------------------------- //
@@ -306,15 +306,15 @@ public class GameScherm {
 
     // --------------------------------------------- SCORE AND PLAYER ---------------------------------------------- //
 
-    private Stapel<Score> getScores(){
+    private Stapel<Score> getScores(int[][] huidigBord){
         Stapel<Score> scores = new Stapel<Score>();
         int player1 = 0;
         int player2 = 0;
         for(int x = 0; x < GROOTTE; x++){
             for(int y = 0; y < GROOTTE; y++){
-                if(bord[x][y] == 1)
+                if(huidigBord[x][y] == 1)
                     player1++;
-                else if(bord[x][y] == 2)
+                else if(huidigBord[x][y] == 2)
                     player2++;
             }
         }
@@ -360,6 +360,7 @@ public class GameScherm {
                 laatSpelerZien();
             }
         }
+        tekenBord();
     }
 
     private void doeComputerZet() throws InterruptedException {
@@ -374,34 +375,70 @@ public class GameScherm {
             }
         }
         if(zetten.lengte() > 0){
+
+            /*
             int lengte = zetten.lengte();
             int random = (int) (Math.random() * lengte);
             Zet zet = null;
             for(int i = 0; i <= random; i++){
                 zet = zetten.pak();
             }
+             */
+
+
+            Zet zet = berekenBesteZet(zetten);
             System.out.println("AI zet: van " + zet.getVan().getX() + "," + zet.getVan().getY() + " naar " + zet.getNaar().getX() + "," + zet.getNaar().getY());
-            doeZet(zet);
+            doeZet(zet, bord);
+            veranderSpeler();
         }
     }
 
-    private void doeZet(Zet zet) {
+    private Zet berekenBesteZet(Stapel<Zet> zetten){
+        Stapel<Zet> besteZetten = new Stapel<Zet>();
+        int besteScore = -1000;
+        while(zetten.lengte() > 0){
+            Zet zet = zetten.pak();
+            int[][] bordKopie = copyBoard(bord);
+            doeZet(zet, bordKopie);
+            Stapel<Score> scores = getScores(bordKopie);
+            Score score2 = scores.pak();
+            Score score1 = scores.pak();
+            int score = score2.getScore() - score1.getScore();
+            if(score > besteScore){
+                besteZetten = new Stapel<Zet>();
+                besteZetten.duw(zet);
+                besteScore = score;
+            }
+            else if(score == besteScore){
+                besteZetten.duw(zet);
+            }
+        }
+        int lengte = besteZetten.lengte();
+        int random = (int) (Math.random() * lengte);
+        Zet besteZet = null;
+        for(int i = 0; i <= random; i++){
+            besteZet = besteZetten.pak();
+        }
+        return besteZet;
+    }
+
+    private void doeZet(Zet zet, int[][] huidigBord) {
         int xVan = zet.getVan().getX();
         int yVan = zet.getVan().getY();
         int xNaar = zet.getNaar().getX();
         int yNaar = zet.getNaar().getY();
 
-        Vakje piece = new Vakje(bord[xVan][yVan], new Coordinaat(xVan, yVan));
+        Vakje piece = new Vakje(huidigBord[xVan][yVan], new Coordinaat(xVan, yVan));
         geselecteerdVakje = piece;
 
-        if(Math.abs(xVan - xNaar) == 1){
-            handelAangrenzendeZet(xNaar, yNaar);
+        if((Math.abs(xVan - xNaar) <= 1) && Math.abs(yVan - yNaar) <= 1){
+            handelAangrenzendeZet(xNaar, yNaar, huidigBord);
         }
         else{
-            handelSpringZet(xNaar, yNaar);
+            handelSpringZet(xNaar, yNaar, huidigBord);
         }
-        checkVijandelijkeStukken(xNaar, yNaar);
-        veranderSpeler();
+        checkVijandelijkeStukken(xNaar, yNaar, huidigBord);
+        //veranderSpeler();
     }
 
     private void checkVoorWinst() {
@@ -416,7 +453,7 @@ public class GameScherm {
             }
         }
         if(zetten.lengte() == 0){
-            Stapel <Score> scores = getScores();
+            Stapel <Score> scores = getScores(bord);
             Score score2 = scores.pak();
             Score score1 = scores.pak();
             if(score1.getScore() > score2.getScore()) {
