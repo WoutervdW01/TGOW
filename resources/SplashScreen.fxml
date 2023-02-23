@@ -9,7 +9,8 @@
       <VBox alignment="TOP_CENTER" layoutX="136.0" layoutY="29.0" spacing="50.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <Label text="The Great Outdoors Wins" />
-            <Button fx:id="startButton" mnemonicParsing="false" onAction="#startGame" text="Start nieuw spel" />
+            <Button fx:id="MultiplayerButton" mnemonicParsing="false" onAction="#startMultiplayer" text="Multiplayer" />
+            <Button fx:id="SingleplayerButton" mnemonicParsing="false" onAction="#startSingleplayer" text="Singleplayer" />
             <Button fx:id="uitlegButton" mnemonicParsing="false" text="Speluitleg" />
          </children>
          <padding>

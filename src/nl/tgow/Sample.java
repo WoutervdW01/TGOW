@@ -7,21 +7,25 @@ import javafx.scene.control.Button;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import nl.tgow.models.SpelType;
 
-import java.awt.*;
 import java.io.IOException;
 
 public class Sample {
 
     @FXML
-    private Button startButton;
+    private Button MultiplayerButton;
+    @FXML
+    private Button SingleplayerButton;
     @FXML
     private Button uitlegButton;
 
+    private SpelType spelType;
+
     public void startGame() throws IOException {
-        Stage stage = (Stage) startButton.getScene().getWindow();
+        Stage stage = (Stage) MultiplayerButton.getScene().getWindow();
         FXMLLoader loader = new FXMLLoader(TGOW.class.getResource("/GameScreen.fxml"));
+        loader.setController(new GameScreen(spelType));
         Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
 
         stage.setScene(new Scene(loader.load(), 0.5 * primaryScreenBounds.getWidth(), 0.5 * primaryScreenBounds.getHeight()));
@@ -31,5 +35,15 @@ public class Sample {
         stage.setMinHeight(800);
         stage.setMinWidth(1000);
         stage.show();
+    }
+
+    public void startSingleplayer() throws IOException {
+        spelType = SpelType.Singleplayer;
+        startGame();
+    }
+
+    public void startMultiplayer() throws IOException {
+        spelType = SpelType.Multiplayer;
+        startGame();
     }
 }

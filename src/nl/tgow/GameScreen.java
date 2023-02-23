@@ -3,19 +3,14 @@ package nl.tgow;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import nl.tgow.datastructures.Stapel;
-import nl.tgow.models.Coordinate;
-import nl.tgow.models.Piece;
-import nl.tgow.models.Score;
-import nl.tgow.models.SpelStand;
+import nl.tgow.models.*;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 public class GameScreen {
 
@@ -32,7 +27,8 @@ public class GameScreen {
     @FXML
     VBox Left;
 
-    private final int GROOTTE = 5;
+    private final int GROOTTE = 7;
+    private final SpelType spelType;
 
     private int[][] board = new int[GROOTTE][GROOTTE];
     private Piece selectedPiece = null;
@@ -43,6 +39,10 @@ public class GameScreen {
 
     private final Stapel<SpelStand> SpelHistorie = new Stapel<SpelStand>();
     private SpelStand huidigeSpelStand;
+
+    public GameScreen(SpelType spelType) {
+        this.spelType = spelType;
+    }
 
     public void initialize(){
         HBox boardContainer = new HBox();
@@ -343,9 +343,63 @@ public class GameScreen {
         //SpelHistorie.duw(huidigeStand);
         checkVoorWinst();
         if(!klaar) {
-            currentPlayer = currentPlayer == 1 ? 2 : 1;
-            showPlayer();
+            if(spelType == SpelType.Multiplayer) {
+                currentPlayer = currentPlayer == 1 ? 2 : 1;
+                showPlayer();
+            } else if(spelType == SpelType.Singleplayer) {
+                currentPlayer = currentPlayer == 1 ? 2 : 1;
+                if(currentPlayer == 2)
+                    try {
+                        System.out.println("AI is aan de beurt");
+                        doeComputerZet();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                showPlayer();
+            }
         }
+    }
+
+    private void doeComputerZet() throws InterruptedException {
+        //Thread.sleep(1000);
+        Stapel<Coordinate> stukken = getStukkenVanSpeler(2);
+        Stapel<Zet> zetten = new Stapel<Zet>();
+        while(stukken.lengte() > 0){
+            Coordinate stuk = stukken.pak();
+            Stapel<Coordinate> stukZetten = alleMogelijkeZetten(stuk);
+            while(stukZetten.lengte() > 0){
+                zetten.duw(new Zet(stuk, stukZetten.pak()));
+            }
+        }
+        if(zetten.lengte() > 0){
+            int lengte = zetten.lengte();
+            int random = (int) (Math.random() * lengte);
+            Zet zet = null;
+            for(int i = 0; i <= random; i++){
+                zet = zetten.pak();
+            }
+            System.out.println("AI zet: van " + zet.getVan().getX() + "," + zet.getVan().getY() + " naar " + zet.getNaar().getX() + "," + zet.getNaar().getY());
+            doeZet(zet);
+        }
+    }
+
+    private void doeZet(Zet zet) {
+        int xVan = zet.getVan().getX();
+        int yVan = zet.getVan().getY();
+        int xNaar = zet.getNaar().getX();
+        int yNaar = zet.getNaar().getY();
+
+        Piece piece = new Piece(board[xVan][yVan], new Coordinate(xVan, yVan));
+        selectedPiece = piece;
+
+        if(Math.abs(xVan - xNaar) == 1){
+            handleDuplicateMove(xNaar, yNaar);
+        }
+        else{
+            handleMoveMove(xNaar, yNaar);
+        }
+        checkEnemyPieces(xNaar, yNaar);
+        changePlayer();
     }
 
     private void checkVoorWinst() {
