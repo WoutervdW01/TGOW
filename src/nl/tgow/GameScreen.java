@@ -1,15 +1,20 @@
 package nl.tgow;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import javafx.stage.Stage;
 import nl.tgow.datastructures.Stapel;
 import nl.tgow.models.Coordinate;
 import nl.tgow.models.Piece;
 import nl.tgow.models.Score;
 import nl.tgow.models.SpelStand;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 public class GameScreen {
@@ -27,9 +32,12 @@ public class GameScreen {
     @FXML
     VBox Left;
 
-    private int[][] board = new int[7][7];
+    private final int GROOTTE = 5;
+
+    private int[][] board = new int[GROOTTE][GROOTTE];
     private Piece selectedPiece = null;
     private int currentPlayer = 1;
+    private boolean klaar = false;
 
     private Stapel score = new Stapel();
 
@@ -52,9 +60,9 @@ public class GameScreen {
 
         GridPane root = new GridPane();
         root.setId("board");
-        final int size = 7;
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
+        //final int size = 4;
+        for (int i = 0; i < GROOTTE; i++) {
+            for (int j = 0; j < GROOTTE; j++) {
                 StackPane square = new StackPane();
                 square.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 1px;");
                 square.setId(i + "," + j);
@@ -79,6 +87,17 @@ public class GameScreen {
             undo();
         });
         Mid.getChildren().add(undoButton);
+
+        Button hoofdMenuButton = new Button("Ga terug naar het hoofdmenu");
+        hoofdMenuButton.setOnMouseClicked(event -> {
+            try {
+                terugNaarHoofdMenu();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+        Mid.getChildren().add(hoofdMenuButton);
         startPosition();
         setPieces();
         SpelHistorie.duw(new SpelStand(copyBoard(board), currentPlayer));
@@ -96,6 +115,7 @@ public class GameScreen {
             printScores(getScores());
             showPlayer();
         }
+        if(klaar) klaar = false;
     }
 
     private void clickSquare(int x, int y){
@@ -110,8 +130,8 @@ public class GameScreen {
             }
             selectedPiece = new Piece(board[x][y], new Coordinate(x, y));
             board[x][y] = -1;
-            Stapel<Coordinate> possibleAdjacentMoves = getPossibleAdjacentMoves();
-            Stapel<Coordinate> possibleMoveMoves = getPossibleMoveMoves();
+            Stapel<Coordinate> possibleAdjacentMoves = getPossibleAdjacentMoves(selectedPiece.getCoordinate());
+            Stapel<Coordinate> possibleMoveMoves = getPossibleMoveMoves(selectedPiece.getCoordinate());
             while(possibleAdjacentMoves.lengte() > 0){
                 Coordinate move = possibleAdjacentMoves.pak();
                 board[move.getX()][move.getY()] = -2;
@@ -166,7 +186,7 @@ public class GameScreen {
         int enemy = currentPlayer == 1 ? 2 : 1;
         for(int a = x-1; a <= x+1; a++){
             for(int b = y-1; b <= y+1; b++){
-                if(a >= 0 && a <= 6 && b >= 0 && b <= 6 && board[a][b] == enemy){
+                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && board[a][b] == enemy){
                     System.out.println("enemy piece at " + a + "," + b);
                     System.out.println("Current player: " + currentPlayer);
                     board[a][b] = currentPlayer;
@@ -179,8 +199,8 @@ public class GameScreen {
     // ------------------------------------ POSSIBLE MOVES -------------------------------------------- //
 
     private void cleanupPossibleMoves(){
-        for(int x = 0; x < 7; x++){
-            for(int y = 0; y < 7; y++){
+        for(int x = 0; x < GROOTTE; x++){
+            for(int y = 0; y < GROOTTE; y++){
                 if(board[x][y] == -2 || board[x][y] == -3){
                     board[x][y] = 0;
                 }
@@ -188,16 +208,16 @@ public class GameScreen {
         }
     }
 
-    private Stapel<Coordinate> getPossibleAdjacentMoves() {
+    private Stapel<Coordinate> getPossibleAdjacentMoves(Coordinate vak) {
         cleanupPossibleMoves();
         Stapel<Coordinate> moves = new Stapel<Coordinate>();
-        int x = selectedPiece.getCoordinate().getX();
-        int y = selectedPiece.getCoordinate().getY();
+        int x = vak.getX();
+        int y = vak.getY();
 
         // all adjacent squares
         for(int a = x-1; a <= x+1; a++){
             for(int b = y-1; b <= y+1; b++){
-                if(a >= 0 && a <= 6 && b >= 0 && b <= 6 && board[a][b] == 0){
+                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && board[a][b] == 0){
                     moves.duw(new Coordinate(a, b));
                 }
             }
@@ -205,33 +225,47 @@ public class GameScreen {
         return moves;
     }
 
-    private Stapel<Coordinate> getPossibleMoveMoves() {
+    private Stapel<Coordinate> getPossibleMoveMoves(Coordinate vak) {
         cleanupPossibleMoves();
         Stapel<Coordinate> moves = new Stapel<Coordinate>();
-        int x = selectedPiece.getCoordinate().getX();
-        int y = selectedPiece.getCoordinate().getY();
+        int x = vak.getX();
+        int y = vak.getY();
         // all squares two squares away
         for(int a = x-2; a <= x+2; a++){
             for(int b = y-2; b <= y+2; b++){
-                if(a >= 0 && a <= 6 && b >= 0 && b <= 6 && board[a][b] == 0 && (Math.abs(a-x) == 2 || Math.abs(b-y) == 2)){
+                if(a >= 0 && a <= GROOTTE - 1 && b >= 0 && b <= GROOTTE - 1 && board[a][b] == 0 &&
+                        (Math.abs(a-x) == 2 || Math.abs(b-y) == 2)){
                     moves.duw(new Coordinate(a, b));
                 }
             }
         }
         return moves;
+    }
+
+    private Stapel<Coordinate> alleMogelijkeZetten(Coordinate vak){
+        Stapel<Coordinate> zetten = new Stapel<Coordinate>();
+        Stapel<Coordinate> aanliggendeZetten = getPossibleAdjacentMoves(vak);
+        Stapel<Coordinate> sprongZetten = getPossibleMoveMoves(vak);
+        while(aanliggendeZetten.lengte() > 0){
+            zetten.duw(aanliggendeZetten.pak());
+        }
+        while(sprongZetten.lengte() > 0){
+            zetten.duw(sprongZetten.pak());
+        }
+        return zetten;
     }
 
     // --------------------------------------------- BOARD LOGIC ---------------------------------------------- //
 
     private void startPosition(){
-        for(int x = 6; x >= 5 ; x--){
+        for(int x = GROOTTE - 1; x >= GROOTTE - 2 ; x--){
             for(int y = 0; y < 2; y++){
                 board[x][y] = 1;
             }
         }
 
         for(int x = 0; x < 2; x++){
-            for(int y = 6; y >=5; y--){
+            for(int y = GROOTTE - 1; y >= GROOTTE - 2; y--){
                 board[x][y] = 2;
             }
         }
@@ -242,8 +276,8 @@ public class GameScreen {
         HBox boardContainer = (HBox) pane.lookup("#boardContainer");
         GridPane boardGrid = (GridPane) boardContainer.lookup("#board");
 
-        for(int x = 0; x < 7; x++){
-            for(int y = 0; y < 7; y++){
+        for(int x = 0; x < GROOTTE; x++){
+            for(int y = 0; y < GROOTTE; y++){
                 setPieceInSquare(boardGrid, x, y, board[x][y]);
             }
         }
@@ -274,8 +308,8 @@ public class GameScreen {
         Stapel<Score> scores = new Stapel<Score>();
         int player1 = 0;
         int player2 = 0;
-        for(int x = 0; x < 7; x++){
-            for(int y = 0; y < 7; y++){
+        for(int x = 0; x < GROOTTE; x++){
+            for(int y = 0; y < GROOTTE; y++){
                 if(board[x][y] == 1)
                     player1++;
                 else if(board[x][y] == 2)
@@ -307,14 +341,71 @@ public class GameScreen {
     private void changePlayer(){
         //SpelStand huidigeStand = new SpelStand(copyBoard(board), currentPlayer);
         //SpelHistorie.duw(huidigeStand);
-        currentPlayer = currentPlayer == 1 ? 2 : 1;
-        showPlayer();
+        checkVoorWinst();
+        if(!klaar) {
+            currentPlayer = currentPlayer == 1 ? 2 : 1;
+            showPlayer();
+        }
+    }
+
+    private void checkVoorWinst() {
+        // check of er voor de tegenstander geen zetten meer mogelijk zijn
+        Stapel<Coordinate> tegenstanderStukken = getStukkenVanSpeler(currentPlayer == 1 ? 2 : 1);
+        Stapel<Coordinate> zetten = new Stapel<Coordinate>();
+        while(tegenstanderStukken.lengte() > 0){
+            Coordinate stuk = tegenstanderStukken.pak();
+            Stapel<Coordinate> stukZetten = alleMogelijkeZetten(stuk);
+            while(stukZetten.lengte() > 0){
+                zetten.duw(stukZetten.pak());
+            }
+        }
+        if(zetten.lengte() == 0){
+            Stapel <Score> scores = getScores();
+            Score score2 = scores.pak();
+            Score score1 = scores.pak();
+            if(score1.getScore() > score2.getScore()) {
+                System.out.println("Player 1 heeft gewonnen!");
+                PlayerLabel.setText("Player 1 heeft gewonnen!");
+            }
+            else if(score1.getScore() < score2.getScore()) {
+                System.out.println("Player 2 heeft gewonnen!");
+                PlayerLabel.setText("Player 2 heeft gewonnen!");
+            }
+
+            else {
+                System.out.println("Player " + currentPlayer + " heeft gewonnen!");
+                PlayerLabel.setText("Player " + currentPlayer + " heeft gewonnen!");
+                Left.setStyle("-fx-background-color: #FFFFFF;");
+            }
+
+            klaar = true;
+        }
+
+
+    }
+
+    private void terugNaarHoofdMenu() throws IOException {
+        Stage stage = (Stage) pane.getScene().getWindow();
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/SplashScreen.fxml"));
+        stage.setScene(new Scene(loader.load(), 300, 300));
+        stage.show();
+    }
+
+    private Stapel<Coordinate> getStukkenVanSpeler(int speler) {
+        Stapel<Coordinate> stukken = new Stapel<Coordinate>();
+        for(int x = 0; x < GROOTTE; x++){
+            for(int y = 0; y < GROOTTE; y++){
+                if(board[x][y] == speler)
+                    stukken.duw(new Coordinate(x, y));
+            }
+        }
+        return stukken;
     }
 
     private int[][] copyBoard(int[][] board){
-        int[][] newBoard = new int[7][7];
-        for(int x = 0; x < 7; x++){
-            for(int y = 0; y < 7; y++){
+        int[][] newBoard = new int[GROOTTE][GROOTTE];
+        for(int x = 0; x < GROOTTE; x++){
+            for(int y = 0; y < GROOTTE; y++){
                 newBoard[x][y] = board[x][y];
             }
         }
