@@ -2,6 +2,8 @@ package nl.tgow;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -26,6 +28,11 @@ public class GameScherm {
     Label ScorePlayer2;
     @FXML
     VBox Left;
+
+    @FXML
+    Label scoreLabelPlayer1;
+    @FXML
+    Label scoreLabelPlayer2;
 
     private final int GROOTTE = 7;
     private final SpelType spelType;
@@ -82,8 +89,18 @@ public class GameScherm {
                     klikOpVakje(x, y);
                     tekenBord();
                 });
-                Label label = new Label("" + i + "," + j);
-                vierkant.getChildren().add(label);
+                vierkant.setAlignment(Pos.TOP_LEFT);
+                vierkant.setPadding(new Insets(5, 5, 5, 5));
+                if(i == 0){
+                    Label label = new Label("" + (j + 1));
+                    label.setStyle("-fx-font-size: 15px;");
+                    vierkant.getChildren().add(label);
+                }
+                if(j == 0 && i != 0){
+                    Label label = new Label("" + (i + 1));
+                    label.setStyle("-fx-font-size: 15px;");
+                    vierkant.getChildren().add(label);
+                }
                 vierkant.setPrefSize(100, 100);
                 root.add(vierkant, i, j);
             }
@@ -108,6 +125,8 @@ public class GameScherm {
 
         Mid.getChildren().add(hoofdMenuButton);
         startPositie();
+        scoreLabelPlayer1.setText("" + SpelerType.values()[0]);
+        scoreLabelPlayer2.setText("" + SpelerType.values()[1]);
         tekenBord();
         SpelHistorie.duw(new SpelStand(copyBoard(bord), huidigeSpeler));
         printScores(getScores(bord));
@@ -233,49 +252,49 @@ public class GameScherm {
      */
     private void klikOpVakje(int x, int y){
         // if player clicked on his own piece
-        int huidigeSpeler = this.huidigeSpeler;
-        int[][] huidigBord = copyBoard(bord);
+        if(!klaar) {
+            int huidigeSpeler = this.huidigeSpeler;
+            int[][] huidigBord = copyBoard(bord);
 
-        if(bord[x][y] == huidigeSpeler) {
-            if (geselecteerdVakje != null) {
-                bord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = geselecteerdVakje.getPlayer();
-                mogelijkeZettenOpschonen();
-                huidigBord = copyBoard(bord);
-            }
-            huidigeSpelStand = new SpelStand(huidigBord, huidigeSpeler);
-            geselecteerdVakje = new Vakje(bord[x][y], new Coordinaat(x, y));
-            bord[x][y] = -1;
-            Stapel<Coordinaat> mogelijkeAangrenzendeZetten = getMogelijkeAangrenzendeZetten(geselecteerdVakje.getCoordinate());
-            Stapel<Coordinaat> mogelijkeSpringZetten = getMogelijkeSpringZetten(geselecteerdVakje.getCoordinate());
-            while(mogelijkeAangrenzendeZetten.lengte() > 0){
-                Coordinaat zet = mogelijkeAangrenzendeZetten.pak();
-                bord[zet.getX()][zet.getY()] = -2;
-            }
-            while(mogelijkeSpringZetten.lengte() > 0){
-                Coordinaat zet = mogelijkeSpringZetten.pak();
-                bord[zet.getX()][zet.getY()] = -3;
-            }
-            //tekenBord();
-        }
-        else if(bord[x][y] == -2 || bord[x][y] == -3){
-            SpelHistorie.duw(huidigeSpelStand);
-            if(bord[x][y] == -2){
-                handelAangrenzendeZet(x, y, this.bord);
-            }
-            else if(bord[x][y] == -3){
-                handelSpringZet(x, y, this.bord);
-            }
-            checkVijandelijkeStukken(x, y, this.bord);
-            veranderSpeler();
-            printScores(getScores(bord));
-        }
-        // if player clicked on an empty square
-        else if(bord[x][y] == -1){
-            mogelijkeZettenOpschonen();
-            if(geselecteerdVakje != null){
-                bord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = geselecteerdVakje.getPlayer();
-                geselecteerdVakje = null;
+            if (bord[x][y] == huidigeSpeler) {
+                if (geselecteerdVakje != null) {
+                    bord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = geselecteerdVakje.getPlayer();
+                    mogelijkeZettenOpschonen();
+                    huidigBord = copyBoard(bord);
+                }
+                huidigeSpelStand = new SpelStand(huidigBord, huidigeSpeler);
+                geselecteerdVakje = new Vakje(bord[x][y], new Coordinaat(x, y));
+                bord[x][y] = -1;
+                Stapel<Coordinaat> mogelijkeAangrenzendeZetten = getMogelijkeAangrenzendeZetten(geselecteerdVakje.getCoordinate());
+                Stapel<Coordinaat> mogelijkeSpringZetten = getMogelijkeSpringZetten(geselecteerdVakje.getCoordinate());
+                while (mogelijkeAangrenzendeZetten.lengte() > 0) {
+                    Coordinaat zet = mogelijkeAangrenzendeZetten.pak();
+                    bord[zet.getX()][zet.getY()] = -2;
+                }
+                while (mogelijkeSpringZetten.lengte() > 0) {
+                    Coordinaat zet = mogelijkeSpringZetten.pak();
+                    bord[zet.getX()][zet.getY()] = -3;
+                }
                 //tekenBord();
+            } else if (bord[x][y] == -2 || bord[x][y] == -3) {
+                SpelHistorie.duw(huidigeSpelStand);
+                if (bord[x][y] == -2) {
+                    handelAangrenzendeZet(x, y, this.bord);
+                } else if (bord[x][y] == -3) {
+                    handelSpringZet(x, y, this.bord);
+                }
+                checkVijandelijkeStukken(x, y, this.bord);
+                veranderSpeler();
+                printScores(getScores(bord));
+            }
+            // if player clicked on an empty square
+            else if (bord[x][y] == -1) {
+                mogelijkeZettenOpschonen();
+                if (geselecteerdVakje != null) {
+                    bord[geselecteerdVakje.getCoordinate().getX()][geselecteerdVakje.getCoordinate().getY()] = geselecteerdVakje.getPlayer();
+                    geselecteerdVakje = null;
+                    //tekenBord();
+                }
             }
         }
     }
@@ -378,7 +397,7 @@ public class GameScherm {
     }
 
     private void laatSpelerZien(){
-        PlayerLabel.setText("Player " + huidigeSpeler);
+        PlayerLabel.setText("" + SpelerType.values()[huidigeSpeler-1]);
         if(huidigeSpeler == 1)
             Left.setStyle("-fx-background-color: #ffa2a2;");
         else
@@ -402,7 +421,7 @@ public class GameScherm {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                laatSpelerZien();
+                if(!klaar) laatSpelerZien();
             }
         }
         tekenBord();
@@ -433,22 +452,29 @@ public class GameScherm {
         Stapel<Zet> besteZetten = new Stapel<Zet>();
         int besteScore = -1000;
         while(zetten.lengte() > 0){
+            // Pak elke keer de eerste zet uit de stapel
             Zet zet = zetten.pak();
+            // Maak een kopie van het huidige bord
             int[][] bordKopie = copyBoard(bord);
+            // Doe de zet op de kopie van het bord
             doeZet(zet, bordKopie);
+            // Verzamel de scores en bereken het verschil in voordeel van de computer
             Stapel<Score> scores = getScores(bordKopie);
             Score score2 = scores.pak();
             Score score1 = scores.pak();
             int score = score2.getScore() - score1.getScore();
+            // Als de score hoger is dan de beste score, maak een nieuwe stapel met alleen deze zet
             if(score > besteScore){
                 besteZetten = new Stapel<Zet>();
                 besteZetten.duw(zet);
                 besteScore = score;
             }
+            // Als de score gelijk is aan de beste score, voeg de zet toe aan de stapel
             else if(score == besteScore){
                 besteZetten.duw(zet);
             }
         }
+        // Pak een random zet uit de stapel met beste zetten
         int lengte = besteZetten.lengte();
         int random = (int) (Math.random() * lengte);
         Zet besteZet = null;
@@ -493,19 +519,19 @@ public class GameScherm {
             Score score2 = scores.pak();
             Score score1 = scores.pak();
             if(score1.getScore() > score2.getScore()) {
-                System.out.println("Player 1 heeft gewonnen!");
-                PlayerLabel.setText("Player 1 heeft gewonnen!");
+                System.out.println(SpelerType.values()[0] + " heeft gewonnen!");
+                PlayerLabel.setText(SpelerType.values()[0] + " heeft gewonnen!");
             }
             else if(score1.getScore() < score2.getScore()) {
-                System.out.println("Player 2 heeft gewonnen!");
-                PlayerLabel.setText("Player 2 heeft gewonnen!");
+                System.out.println(SpelerType.values()[1] + " heeft gewonnen!");
+                PlayerLabel.setText(SpelerType.values()[1] + " heeft gewonnen!");
             }
 
             else {
-                System.out.println("Player " + huidigeSpeler + " heeft gewonnen!");
-                PlayerLabel.setText("Player " + huidigeSpeler + " heeft gewonnen!");
-                Left.setStyle("-fx-background-color: #FFFFFF;");
+                System.out.println("Gelijkspel!");
+                PlayerLabel.setText("Gelijkspel!");
             }
+            Left.setStyle("-fx-background-color: #FFFFFF;");
 
             klaar = true;
         }

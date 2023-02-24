@@ -2,11 +2,9 @@ package nl.tgow.datastructures;
 
 public class Stapel<T> {
     private Node boven;
-    private Node onder;
 
     public Stapel(){
         this.boven = null;
-        this.onder = null;
     }
 
     private class Node{
@@ -52,11 +50,11 @@ public class Stapel<T> {
         if(this.boven == null)
             return 0;
         Node huidig = this.boven;
-        int count = 1;
+        int teller = 1;
         while(huidig.getVolgende() != null){
             huidig = huidig.getVolgende();
-            count++;
+            teller++;
         }
-        return count;
+        return teller;
     }
 }

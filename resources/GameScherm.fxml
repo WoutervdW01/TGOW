@@ -10,7 +10,10 @@
          <children>
             <VBox fx:id="Left" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0" style="-fx-background-color: red;" HBox.hgrow="ALWAYS">
                <children>
-                  <Label text="Current Player: " />
+                  <Label text="Huidige Speler:">
+                     <font>
+                        <Font name="Impact" size="20.0" />
+                     </font></Label>
                   <VBox alignment="CENTER" maxWidth="100.0" minWidth="100.0" VBox.vgrow="ALWAYS">
                      <children>
                         <Label fx:id="PlayerLabel" alignment="CENTER" minWidth="500.0" rotate="-88.8" text="Label" wrapText="true">
@@ -29,7 +32,10 @@
                      <children>
                         <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0" style="-fx-background-color: #ffa2a2;" HBox.hgrow="ALWAYS">
                            <children>
-                              <Label text="Player 1" />
+                              <Label fx:id="scoreLabelPlayer1" text="Player 1">
+                                 <font>
+                                    <Font name="Impact" size="14.0" />
+                                 </font></Label>
                               <VBox alignment="CENTER" VBox.vgrow="ALWAYS">
                                  <children>
                                     <Label fx:id="ScorePlayer1" text="Label">
@@ -43,7 +49,10 @@
                         </VBox>
                         <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0" style="-fx-background-color: #a5ffa2;" HBox.hgrow="ALWAYS">
                            <children>
-                              <Label text="Player 2" />
+                              <Label fx:id="scoreLabelPlayer2" text="Player 2">
+                                 <font>
+                                    <Font name="Impact" size="14.0" />
+                                 </font></Label>
                               <VBox alignment="CENTER" VBox.vgrow="ALWAYS">
                                  <children>
                                     <Label fx:id="ScorePlayer2" text="Label">

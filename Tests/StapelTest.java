@@ -7,13 +7,13 @@ public class StapelTest {
     private Stapel stapel = new Stapel();
 
     @Test
-    public void emptyStackTest(){
+    public void LegeStapelTest(){
         Object result = stapel.pak();
         Assertions.assertNull(result);
     }
 
     @Test
-    public void oneItemInStackTest() {
+    public void EenElementOpStapelTest() {
         stapel.duw("Alice");
         Assertions.assertEquals(1, stapel.lengte());
         Assertions.assertEquals("Alice", stapel.pak());
@@ -21,7 +21,7 @@ public class StapelTest {
     }
 
     @Test
-    public void multipleItemsInStackTest(){
+    public void MeerdereElementenOpStapel(){
         stapel.duw("Alice");
         stapel.duw("Bob");
         stapel.duw("Eve");
@@ -32,7 +32,7 @@ public class StapelTest {
     }
 
     @Test
-    public void testDifferentObjectTypes(){
+    public void VerschillendeTypesOpStapel(){
         stapel.duw("Alice");
         stapel.duw(2);
         stapel.duw(23.55);
